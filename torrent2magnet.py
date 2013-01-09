@@ -6,7 +6,7 @@ import urllib.parse
 import bencode
 
 for filename in sys.argv[1:]:
-    print(filename, ":", sep="")
+    print(filename, ":", sep="", file=sys.stderr)
     result = []
     file = open(filename, "br")
     torrentdic = bencode.bdecode(file.read())
