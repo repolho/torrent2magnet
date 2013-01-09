@@ -4,8 +4,25 @@ import sys
 import hashlib
 import urllib.parse
 import bencode
+import argparse
 
-for filename in sys.argv[1:]:
+parser = argparse.ArgumentParser(description='Convert torrent files to magnet '
+                                             'links')
+parser.add_argument('files', metavar='torrent', nargs='+',
+                    help='a torrent file')
+parser.add_argument('-a', '--append-trackers', dest='trackers_file',
+                    metavar='trackers_file',
+                    help='append tracker list to magnet')
+args = parser.parse_args()
+
+new_trackers = []
+if args.trackers_file != None:
+    f = open(args.trackers_file, 'r')
+    for line in f:
+        new_trackers.append(line.rstrip())
+    f.close()
+
+for filename in args.files:
     print(filename, ":", sep="", file=sys.stderr)
     result = []
     file = open(filename, "br")
@@ -23,20 +40,19 @@ for filename in sys.argv[1:]:
         quoted = urllib.parse.quote(torrentdic["info"]["name"], safe="")
         result.append("dn="+quoted)
 
-    # avoid duplicate urls
-    seen_urls = []
+    trackers = []
     if "announce-list" in torrentdic:
         for urllist in torrentdic["announce-list"]:
-            for url in urllist:
-                if url not in seen_urls:
-                    seen_urls.append(url)
-                    quoted = urllib.parse.quote(url, safe="")
-                    result.append("tr="+quoted)
+            trackers += urllist
     elif "announce" in torrentdic:
-        url = torrentdic["announce"]
+        trackers.append(torrentdic["announce"])
+    trackers += new_trackers
+
+    # eliminating duplicates without sorting
+    seen_urls = []
+    for url in trackers:
         if url not in seen_urls:
             seen_urls.append(url)
             quoted = urllib.parse.quote(url, safe="")
             result.append("tr="+quoted)
-
     print("magnet:?", "&".join(result), sep="")
