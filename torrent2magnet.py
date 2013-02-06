@@ -1,6 +1,7 @@
 #! /usr/bin/python3
 
 import sys
+import os.path
 import hashlib
 import urllib.parse
 import bencode
@@ -13,7 +14,14 @@ parser.add_argument('files', metavar='torrent', nargs='+',
 parser.add_argument('-a', '--append-trackers', dest='trackers_file',
                     metavar='trackers_file',
                     help='append tracker list to magnet')
+parser.add_argument('-o', '--output-torrent', dest='output_file',
+                    metavar='output_file',
+                    help="output to torrent file instead of magnet (for adding trackers, otherwise useless)")
 args = parser.parse_args()
+
+if args.output_file != None and os.path.exists(args.output_file):
+    print('File exists, aborting:', args.output_file, file=sys.stderr)
+    exit(1)
 
 new_trackers = []
 if args.trackers_file != None:
@@ -51,8 +59,15 @@ for filename in args.files:
     # eliminating duplicates without sorting
     seen_urls = []
     for url in trackers:
-        if url not in seen_urls:
-            seen_urls.append(url)
+        if [url] not in seen_urls:
+            seen_urls.append([url])
             quoted = urllib.parse.quote(url, safe="")
             result.append("tr="+quoted)
-    print("magnet:?", "&".join(result), sep="")
+    torrentdic["announce-list"] = seen_urls
+
+    if args.output_file == None:
+        print("magnet:?", "&".join(result), sep="")
+    else:
+        out = open(args.output_file, 'bw')
+        out.write(bencode.bencode(torrentdic))
+        out.close()
