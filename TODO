@@ -1,1 +1,0 @@
-move main() in bencode.py to a torrentinfo.py, then complete it

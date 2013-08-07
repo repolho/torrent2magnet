@@ -107,31 +107,3 @@ def bdecode(bytestr, recursiveCall=False):
             return result
     else:
         raise ValueError("String ended unexpectedly")
-
-# ------------------ DEBUG, REMOVE ------------------
-import sys
-import os
-import binascii
-
-def printTree(tree, depth=0):
-    ident = "  "
-    if tree != None:
-        if type(tree) in  [dict, collections.OrderedDict]:
-            for key in tree:
-                print(ident*depth, key, sep="")
-                printTree(tree[key], depth+1)
-        elif type(tree) == list:
-            for val in tree:
-                printTree(val, depth+1)
-        elif type(tree) == bytes:
-            for i in range(0, len(tree), 20):
-                section = tree[i:i+20]
-                print(ident*depth, bytes.decode(binascii.hexlify(section)), sep="")
-        else:
-            print(ident*depth, tree, sep="")
-
-if os.path.basename(sys.argv[0]) == "bencode.py":
-    bytestr = b""
-    for line in sys.stdin.buffer:
-        bytestr += line
-    printTree(bdecode(bytestr))
